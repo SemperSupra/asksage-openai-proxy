@@ -1,0 +1,12 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: asksage-openai-proxy
+spec:
+  to:
+    kind: Service
+    name: asksage-openai-proxy
+  port:
+    targetPort: http
+  tls:
+    termination: edge

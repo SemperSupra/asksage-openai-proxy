@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asksage-openai-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: asksage-openai-proxy
+  template:
+    metadata:
+      labels:
+        app: asksage-openai-proxy
+    spec:
+      containers:
+        - name: proxy
+          image: asksage-openai-proxy:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: ASKSAGE_SERVER_BASE
+              value: "https://api.genai.army.mil/server/"
+            - name: ASKSAGE_DEFAULT_MODEL
+              value: "gpt-4o-mini"
+            - name: ASKSAGE_VERIFY_TLS
+              value: "true"
+          envFrom:
+            - secretRef:
+                name: asksage-proxy-secret
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
