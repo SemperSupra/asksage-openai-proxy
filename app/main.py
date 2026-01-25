@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Optional, Union, AsyncGenerator
 from contextlib import asynccontextmanager
 
 import httpx
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
+from fastapi.responses import JSONResponse, StreamingResponse, Response
 
 APP_NAME = "asksage-openai-proxy"
 
@@ -153,6 +153,75 @@ async def asksage_post(path: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     return {"data": data}
 
 
+async def asksage_post_bytes(path: str, payload: Dict[str, Any]) -> bytes:
+    """
+    POST to Ask Sage Server API and return binary content.
+    """
+    if not ASKSAGE_API_KEY:
+        raise HTTPException(status_code=500, detail="ASKSAGE_API_KEY is not set")
+
+    url = ASKSAGE_SERVER_BASE + path.lstrip("/")
+    headers = {
+        "x-access-tokens": ASKSAGE_API_KEY,
+        "Content-Type": "application/json",
+    }
+
+    if hasattr(app.state, "http_client"):
+        client = app.state.http_client
+        resp = await client.post(url, headers=headers, json=payload)
+    else:
+        verify: Union[bool, str] = ASKSAGE_VERIFY_TLS
+        if ASKSAGE_CA_BUNDLE_PATH:
+            verify = ASKSAGE_CA_BUNDLE_PATH
+        async with httpx.AsyncClient(timeout=HTTP_TIMEOUT, verify=verify) as client:
+            resp = await client.post(url, headers=headers, json=payload)
+
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=502, detail=f"AskSage request failed: {resp.status_code} {resp.text}")
+
+    return resp.content
+
+
+async def asksage_post_multipart(path: str, files: Dict[str, Any], data: Dict[str, Any] = None) -> Dict[str, Any]:
+    """
+    POST to Ask Sage Server API with multipart/form-data.
+    """
+    if not ASKSAGE_API_KEY:
+        raise HTTPException(status_code=500, detail="ASKSAGE_API_KEY is not set")
+
+    url = ASKSAGE_SERVER_BASE + path.lstrip("/")
+    headers = {
+        "x-access-tokens": ASKSAGE_API_KEY,
+        # Content-Type is set by httpx when using files
+    }
+
+    if hasattr(app.state, "http_client"):
+        client = app.state.http_client
+        resp = await client.post(url, headers=headers, files=files, data=data)
+    else:
+        verify: Union[bool, str] = ASKSAGE_VERIFY_TLS
+        if ASKSAGE_CA_BUNDLE_PATH:
+            verify = ASKSAGE_CA_BUNDLE_PATH
+        async with httpx.AsyncClient(timeout=HTTP_TIMEOUT, verify=verify) as client:
+            resp = await client.post(url, headers=headers, files=files, data=data)
+
+    try:
+        response_data = resp.json()
+    except Exception:
+        response_data = {"raw": resp.text}
+
+    if resp.status_code >= 400:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "error": "AskSage request failed",
+                "asksage_status": resp.status_code,
+                "asksage_response": response_data,
+            },
+        )
+    return response_data
+
+
 @app.get("/v1/models")
 @app.get("/v1/models/")
 async def v1_models() -> JSONResponse:
@@ -170,6 +239,81 @@ async def v1_models() -> JSONResponse:
 
     out = {"object": "list", "data": models}
     return JSONResponse(out)
+
+
+@app.get("/v1/models/{model}")
+async def v1_model_retrieve(model: str) -> JSONResponse:
+    """
+    Retrieve a specific model.
+    """
+    data = await asksage_post("get-models", payload={})
+    for m in (data.get("data") or []):
+        mid = m.get("id") or m.get("name") or "unknown"
+        if mid == model:
+             return JSONResponse({"id": mid, "object": "model", "owned_by": m.get("owned_by", "asksage")})
+
+    raise HTTPException(status_code=404, detail="Model not found")
+
+
+@app.post("/v1/audio/speech")
+async def v1_audio_speech(req: Request) -> Response:
+    """
+    OpenAI-compatible Text-to-Speech -> Ask Sage /get-text-to-speech
+    """
+    body = await req.json()
+
+    input_text = body.get("input")
+    if not input_text:
+        raise HTTPException(status_code=400, detail="Missing required field: input")
+
+    voice = body.get("voice", "alloy")
+    model = body.get("model", "tts-1")
+
+    # Map model
+    asksage_model = "tts"
+    if model == "tts-1-hd":
+        asksage_model = "tts-hd"
+    elif model == "tts-1":
+        asksage_model = "tts"
+    else:
+        # Fallback to provided model name if it's custom, or default to tts
+        # For safety, if it's not a known openai model, we'll try passing it as is or default?
+        # Ask Sage docs specifically list 'tts' and 'tts-hd'.
+        asksage_model = "tts"
+
+    payload = {
+        "text": input_text,
+        "voice": voice,
+        "model": asksage_model
+    }
+
+    audio_content = await asksage_post_bytes("get-text-to-speech", payload=payload)
+
+    return Response(content=audio_content, media_type="audio/mpeg")
+
+
+@app.post("/v1/audio/transcriptions")
+async def v1_audio_transcriptions(
+    file: UploadFile = File(...),
+    model: str = Form("whisper-1")
+) -> Dict[str, Any]:
+    """
+    OpenAI-compatible Speech-to-Text -> Ask Sage /file
+    """
+    # Read file content to pass to httpx
+    content = await file.read()
+    files = {"file": (file.filename, content, file.content_type)}
+
+    # Ask Sage /server/file endpoint
+    # Response: { "ret": "extracted text", "status": 200, "response": "OK" }
+    data = await asksage_post_multipart("file", files=files)
+
+    text = data.get("ret")
+    if text is None:
+         # Fallback
+         text = data.get("response") or ""
+
+    return {"text": text}
 
 
 def _now_epoch() -> int:
