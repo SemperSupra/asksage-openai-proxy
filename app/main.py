@@ -2,6 +2,7 @@ import os
 import time
 import json
 from typing import Any, Dict, List, Optional, Union, AsyncGenerator
+from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
@@ -35,7 +36,17 @@ if not ASKSAGE_API_KEY:
     # Allow container to start but fail requests with a clean error
     pass
 
-app = FastAPI(title=APP_NAME, version="0.1.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    verify: Union[bool, str] = ASKSAGE_VERIFY_TLS
+    if ASKSAGE_CA_BUNDLE_PATH:
+        verify = ASKSAGE_CA_BUNDLE_PATH
+
+    app.state.http_client = httpx.AsyncClient(timeout=HTTP_TIMEOUT, verify=verify)
+    yield
+    await app.state.http_client.aclose()
+
+app = FastAPI(title=APP_NAME, version="0.1.0", lifespan=lifespan)
 
 
 @app.get("/healthz")
@@ -111,29 +122,35 @@ async def asksage_post(path: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         "Accept": "application/json",
     }
 
-    verify: Union[bool, str] = ASKSAGE_VERIFY_TLS
-    if ASKSAGE_CA_BUNDLE_PATH:
-        verify = ASKSAGE_CA_BUNDLE_PATH
-
-    async with httpx.AsyncClient(timeout=HTTP_TIMEOUT, verify=verify) as client:
+    # Use the persistent client from app state
+    if hasattr(app.state, "http_client"):
+        client = app.state.http_client
         resp = await client.post(url, headers=headers, json=payload)
-        # Ask Sage errors are typically JSON with message + status
-        try:
-            data = resp.json()
-        except Exception:
-            data = {"raw": resp.text}
-        if resp.status_code >= 400:
-            raise HTTPException(
-                status_code=502,
-                detail={
-                    "error": "AskSage request failed",
-                    "asksage_status": resp.status_code,
-                    "asksage_response": data,
-                },
-            )
-        if isinstance(data, dict):
-            return data
-        return {"data": data}
+    else:
+        # Fallback if lifespan not run
+        verify: Union[bool, str] = ASKSAGE_VERIFY_TLS
+        if ASKSAGE_CA_BUNDLE_PATH:
+            verify = ASKSAGE_CA_BUNDLE_PATH
+        async with httpx.AsyncClient(timeout=HTTP_TIMEOUT, verify=verify) as client:
+            resp = await client.post(url, headers=headers, json=payload)
+
+    # Ask Sage errors are typically JSON with message + status
+    try:
+        data = resp.json()
+    except Exception:
+        data = {"raw": resp.text}
+    if resp.status_code >= 400:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "error": "AskSage request failed",
+                "asksage_status": resp.status_code,
+                "asksage_response": data,
+            },
+        )
+    if isinstance(data, dict):
+        return data
+    return {"data": data}
 
 
 @app.get("/v1/models")
