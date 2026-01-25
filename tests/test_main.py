@@ -123,3 +123,78 @@ def test_chat_completions_stream():
     assert "data: " in content
     assert "Streamed response" in content
     assert "[DONE]" in content
+
+
+@respx.mock
+def test_v1_model_retrieve():
+    # Mock Ask Sage /get-models
+    respx.post(f"{MOCK_BASE}get-models").mock(
+        return_value=Response(
+            200,
+            json={
+                "object": "list",
+                "data": [
+                    {"id": "gpt-4o-mini", "owned_by": "openai"},
+                    {"name": "claude-3-opus", "owned_by": "anthropic"}
+                ]
+            }
+        )
+    )
+
+    resp = client.get("/v1/models/gpt-4o-mini")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["id"] == "gpt-4o-mini"
+    assert data["object"] == "model"
+
+    resp = client.get("/v1/models/claude-3-opus")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["id"] == "claude-3-opus"
+
+    resp = client.get("/v1/models/non-existent")
+    assert resp.status_code == 404
+
+
+@respx.mock
+def test_audio_speech():
+    # Mock Ask Sage /get-text-to-speech
+    mock_audio = b"fake audio content"
+    respx.post(f"{MOCK_BASE}get-text-to-speech").mock(
+        return_value=Response(
+            200,
+            content=mock_audio
+        )
+    )
+
+    payload = {
+        "model": "tts-1",
+        "input": "Hello",
+        "voice": "alloy"
+    }
+    resp = client.post("/v1/audio/speech", json=payload)
+    assert resp.status_code == 200
+    assert resp.content == mock_audio
+    assert resp.headers["content-type"] == "audio/mpeg"
+
+
+@respx.mock
+def test_audio_transcriptions():
+    # Mock Ask Sage /file
+    respx.post(f"{MOCK_BASE}file").mock(
+        return_value=Response(
+            200,
+            json={
+                "ret": "Extracted text from audio",
+                "status": 200
+            }
+        )
+    )
+
+    # Use a dummy file
+    files = {'file': ('test.mp3', b'audio data', 'audio/mpeg')}
+    resp = client.post("/v1/audio/transcriptions", files=files, data={"model": "whisper-1"})
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["text"] == "Extracted text from audio"
