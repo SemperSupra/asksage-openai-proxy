@@ -1,0 +1,86 @@
+name: Approved Issues Only
+on:
+  issues:
+    types: [opened, reopened]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check-collaborator:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if user is a collaborator
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const username = context.payload.issue.user.login;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            try {
+              // Check if user is a collaborator
+              await github.rest.repos.checkCollaborator({
+                owner,
+                repo,
+                username,
+              });
+              console.log(`${username} is a collaborator.`);
+            } catch (error) {
+              // If 404, user is not a collaborator
+              if (error.status === 404) {
+                console.log(`${username} is NOT a collaborator.`);
+
+                const labelName = 'unapproved';
+                const commentBody = 'Thanks for the report. This project is invite-only and only accepts issue reports from approved collaborators.';
+
+                // Ensure label exists (idempotent)
+                try {
+                  await github.rest.issues.getLabel({
+                    owner,
+                    repo,
+                    name: labelName
+                  });
+                } catch (labelError) {
+                  if (labelError.status === 404) {
+                    console.log(`Creating label: ${labelName}`);
+                    await github.rest.issues.createLabel({
+                      owner,
+                      repo,
+                      name: labelName,
+                      color: 'ff0000',
+                      description: 'Issue/PR from non-collaborator'
+                    });
+                  }
+                }
+
+                // Add label to issue
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: context.payload.issue.number,
+                  labels: [labelName]
+                });
+
+                // Add comment to issue
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: context.payload.issue.number,
+                  body: commentBody
+                });
+
+                // Close issue
+                await github.rest.issues.update({
+                  owner,
+                  repo,
+                  issue_number: context.payload.issue.number,
+                  state: 'closed'
+                });
+
+              } else {
+                // If other error, rethrow
+                throw error;
+              }
+            }
