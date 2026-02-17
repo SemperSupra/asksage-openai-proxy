@@ -1,0 +1,30 @@
+name: PowerShell Checks
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'powershell/**'
+      - 'scripts/check-powershell.ps1'
+      - '.github/workflows/check-powershell.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'powershell/**'
+      - 'scripts/check-powershell.ps1'
+      - '.github/workflows/check-powershell.yml'
+
+jobs:
+  check-powershell:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run PowerShell Checks
+        shell: pwsh
+        run: ./scripts/check-powershell.ps1
