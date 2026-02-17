@@ -105,3 +105,28 @@ Then (optionally) add Ask Sage-specific knobs using the `asksage` object in requ
 - This proxy maps OpenAI `messages[]` into a single prompt string for maximum compatibility.
 - Tool/function calling is **not** implemented yet (Ask Sage has a `tools` parameter, but formats vary).
 - Streaming is “minimal”: the proxy emits a single SSE chunk with the full response.
+
+## PowerShell Implementation
+
+A portable PowerShell implementation is available in the `powershell/` directory. It requires no Python or Docker dependencies, only PowerShell Core (pwsh) or Windows PowerShell 5.1+.
+
+### Run
+
+```powershell
+./powershell/AskSageProxy.ps1 -Port 8080
+```
+
+### Sample Usage
+
+```powershell
+./powershell/SampleUsage.ps1
+```
+
+Supported endpoints:
+- `GET /healthz`
+- `GET /v1/models`
+- `POST /v1/chat/completions` (streaming supported)
+- `POST /v1/audio/speech`
+- `POST /v1/audio/transcriptions` (multipart/form-data supported)
+
+Environment variables are the same as the Python version (e.g. `ASKSAGE_API_KEY`).
