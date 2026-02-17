@@ -1,0 +1,41 @@
+# Debian Trixie (testing) based image.
+FROM debian:trixie-slim
+
+# Install system dependencies
+# libicu-dev and libssl-dev pull in the necessary libraries for .NET runtime.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    ca-certificates \
+    libicu-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and install PowerShell Core
+ARG PS_VERSION=7.4.6
+RUN wget -q https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-x64.tar.gz -O /tmp/powershell.tar.gz && \
+    mkdir -p /opt/microsoft/powershell/7 && \
+    tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 && \
+    chmod +x /opt/microsoft/powershell/7/pwsh && \
+    ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh && \
+    rm /tmp/powershell.tar.gz
+
+# Create a non-root user
+RUN groupadd -g 1000 appuser && \
+    useradd -u 1000 -g appuser -m -s /bin/bash appuser
+
+WORKDIR /app
+
+# Copy application code
+COPY AskSageProxy.ps1 /app/AskSageProxy.ps1
+
+# Ensure ownership by appuser
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 8000
+
+# Run the proxy
+CMD ["pwsh", "-File", "/app/AskSageProxy.ps1"]
