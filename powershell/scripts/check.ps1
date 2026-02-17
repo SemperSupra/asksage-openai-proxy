@@ -51,7 +51,7 @@ foreach ($key in $modules.Keys) {
 Write-Host "`n==> Running PSScriptAnalyzer..."
 Import-Module PSScriptAnalyzer -RequiredVersion $modules["PSScriptAnalyzer"] -Force
 
-$analyzerResults = Invoke-ScriptAnalyzer -Path "$repoRoot/powershell" -Recurse -Severity Error,Warning
+$analyzerResults = Invoke-ScriptAnalyzer -Path "$repoRoot" -Recurse -Severity Error,Warning
 if ($analyzerResults) {
     $analyzerResults | Format-Table
     $errors = $analyzerResults | Where-Object { $_.Severity -eq "Error" }
@@ -67,7 +67,7 @@ Write-Host "`n==> Running Pester Tests..."
 Import-Module Pester -RequiredVersion $modules["Pester"] -Force
 
 $pesterConfig = [PesterConfiguration]::Default
-$pesterConfig.Run.Path = "$repoRoot/powershell/tests"
+$pesterConfig.Run.Path = "$repoRoot/tests"
 $pesterConfig.Run.Exit = $false # We handle exit manually
 $pesterConfig.Output.Verbosity = "Detailed"
 $pesterConfig.TestResult.Enabled = $true
