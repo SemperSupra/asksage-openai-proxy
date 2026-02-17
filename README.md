@@ -6,6 +6,8 @@ so you can use Ask Sage with tools that expect OpenAI endpoints.
 - OpenAI endpoint implemented:
   - `POST /v1/chat/completions`
   - `GET /v1/models`
+  - `POST /v1/audio/speech`
+  - `POST /v1/audio/transcriptions`
 - Health:
   - `GET /healthz`
 
