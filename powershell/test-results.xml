@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="7" errors="0" failures="7" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2026-02-17" time="19:27:00">
+  <environment user-domain="" platform="Linux" machine-name="devbox" cwd="/app" nunit-version="2.5.8.0" clr-version="8.0.10" os-version="6.8.0" user="jules" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="2.6746" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/app/powershell/tests/AskSageProxy.Tests.ps1" executed="True" result="Failure" success="False" time="2.6746" asserts="0" description="/app/powershell/tests/AskSageProxy.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="AskSageProxy Integration" executed="True" result="Failure" success="False" time="2.1941" asserts="0" description="AskSageProxy Integration">
+            <results>
+              <test-case description="GET /healthz returns ok" name="AskSageProxy Integration.GET /healthz returns ok" time="0" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                  <stack-trace />
+                </failure>
+              </test-case>
+              <test-case description="GET /v1/models returns models list" name="AskSageProxy Integration.GET /v1/models returns models list" time="0" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                  <stack-trace />
+                </failure>
+              </test-case>
+              <test-case description="GET /v1/models/{model} returns specific model" name="AskSageProxy Integration.GET /v1/models/{model} returns specific model" time="0" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                  <stack-trace />
+                </failure>
+              </test-case>
+              <test-case description="POST /v1/chat/completions returns response" name="AskSageProxy Integration.POST /v1/chat/completions returns response" time="0" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                  <stack-trace />
+                </failure>
+              </test-case>
+              <test-case description="POST /v1/audio/speech returns audio data" name="AskSageProxy Integration.POST /v1/audio/speech returns audio data" time="0" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                  <stack-trace />
+                </failure>
+              </test-case>
+              <test-case description="POST /v1/audio/transcriptions (Multipart) returns text" name="AskSageProxy Integration.POST /v1/audio/transcriptions (Multipart) returns text" time="0" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                  <stack-trace />
+                </failure>
+              </test-case>
+              <test-case description="Returns 404 for unknown path" name="AskSageProxy Integration.Returns 404 for unknown path" time="0" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                  <stack-trace />
+                </failure>
+              </test-case>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>
