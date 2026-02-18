@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user
-RUN groupadd -g 1000 appuser && \
-    useradd -u 1000 -g appuser -m -s /bin/bash appuser
+RUN groupadd -g 1000 proxy && \
+    useradd -u 1000 -g proxy -m -s /bin/bash proxy
 
 WORKDIR /app
 
@@ -29,11 +29,11 @@ RUN python3 -m venv /app/venv && \
 # Copy application code
 COPY app/ /app/app/
 
-# Ensure ownership by appuser
-RUN chown -R appuser:appuser /app
+# Ensure ownership by proxy
+RUN chown -R proxy:proxy /app
 
 # Switch to non-root user
-USER appuser
+USER proxy
 
 # Expose port
 EXPOSE 8000

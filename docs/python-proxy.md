@@ -39,7 +39,7 @@ From the `python/` directory:
 
 ```bash
 cd python
-podman build -f Containerfile -t asksage-openai-proxy:latest .
+podman build -f Containerfile -t asksage-openai-proxy-python:latest .
 ```
 
 ### Run (rootless)
@@ -49,7 +49,7 @@ export ASKSAGE_API_KEY="YOUR_API_KEY"
 podman run --rm -p 8000:8000 \
   -e ASKSAGE_API_KEY \
   -e ASKSAGE_SERVER_BASE="https://api.genai.army.mil/server/" \
-  asksage-openai-proxy:latest
+  asksage-openai-proxy-python:latest
 ```
 
 ### Smoke test

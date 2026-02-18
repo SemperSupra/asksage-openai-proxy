@@ -9,13 +9,13 @@ This guide explains how to build and run the proxy using Docker or Podman. Both 
 **Docker:**
 ```bash
 cd python
-docker build -t asksage-python-proxy .
+docker build -t asksage-openai-proxy-python .
 ```
 
 **Podman:**
 ```bash
 cd python
-podman build -t asksage-python-proxy .
+podman build -t asksage-openai-proxy-python .
 ```
 
 ### Running
@@ -25,8 +25,8 @@ podman build -t asksage-python-proxy .
 docker run -d \
   -p 8000:8000 \
   -e ASKSAGE_API_KEY="your-key-here" \
-  --name asksage-proxy \
-  asksage-python-proxy
+  --name asksage-openai-proxy-python \
+  asksage-openai-proxy-python
 ```
 
 **Podman:**
@@ -34,8 +34,8 @@ docker run -d \
 podman run -d \
   -p 8000:8000 \
   -e ASKSAGE_API_KEY="your-key-here" \
-  --name asksage-proxy \
-  asksage-python-proxy
+  --name asksage-openai-proxy-python \
+  asksage-openai-proxy-python
 ```
 
 ## PowerShell Version
@@ -45,13 +45,13 @@ podman run -d \
 **Docker:**
 ```bash
 cd powershell
-docker build -t asksage-powershell-proxy .
+docker build -t asksage-openai-proxy-powershell .
 ```
 
 **Podman:**
 ```bash
 cd powershell
-podman build -t asksage-powershell-proxy .
+podman build -t asksage-openai-proxy-powershell .
 ```
 
 ### Running
@@ -61,8 +61,8 @@ podman build -t asksage-powershell-proxy .
 docker run -d \
   -p 8000:8000 \
   -e ASKSAGE_API_KEY="your-key-here" \
-  --name asksage-pwsh-proxy \
-  asksage-powershell-proxy
+  --name asksage-openai-proxy-powershell \
+  asksage-openai-proxy-powershell
 ```
 
 **Podman:**
@@ -70,6 +70,6 @@ docker run -d \
 podman run -d \
   -p 8000:8000 \
   -e ASKSAGE_API_KEY="your-key-here" \
-  --name asksage-pwsh-proxy \
-  asksage-powershell-proxy
+  --name asksage-openai-proxy-powershell \
+  asksage-openai-proxy-powershell
 ```

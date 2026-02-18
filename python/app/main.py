@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI):
     yield
     await app.state.http_client.aclose()
 
-app = FastAPI(title=APP_NAME, version="0.1.0", lifespan=lifespan)
+app = FastAPI(title=APP_NAME, version="HEAD", lifespan=lifespan)
 
 
 @app.get("/healthz")

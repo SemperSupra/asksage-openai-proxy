@@ -25,8 +25,8 @@ This repository contains two equivalent implementations:
 
 ```bash
 cd python
-podman build -t asksage-openai-proxy .
-podman run -p 8000:8000 -e ASKSAGE_API_KEY="your-key" asksage-openai-proxy
+podman build -t asksage-openai-proxy-python .
+podman run -p 8000:8000 -e ASKSAGE_API_KEY="your-key" asksage-openai-proxy-python
 ```
 
 See [docs/python-proxy.md](docs/python-proxy.md) for full details.
